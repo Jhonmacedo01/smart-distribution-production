@@ -77,5 +77,11 @@ Sistema completo para gestão de estoque industrial com autenticação JWT, hist
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/kanban-estoque.git
-cd kanban-estoque
+git clone [https://github.com/seu-usuario/kanban-estoque.git](https://github.com/Jhonmacedo01/smart-distribution-production.git)
+cd smart-distribution-productio
+
+
+
+
+
+
