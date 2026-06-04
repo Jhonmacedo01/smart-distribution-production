@@ -1,214 +1,3 @@
-/* ==========================================================================
-   SISTEMA DE ESTOQUE INDUSTRIAL - VERSÃO 4.0.1 PRODUCTION
-   COM TELA DE CADASTRO E USUÁRIOS OPERACIONAIS
-   ========================================================================== */
-
-// URL da API - Configuração automática
-const API_URL = (() => {
-    // Em produção, usar a URL do backend no Render
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        return '/api';
-    }
-    return 'http://localhost:3000/api';
-})();
-
-let currentUser = null;
-let authToken = null;
-let inventory = [];
-let history = [];
-let currentCategory = 'all';
-let currentSearch = '';
-let currentView = 'grid';
-let companyConfig = { name: 'KANBAN AUTOMAÇÃO' };
-let currentWithdrawItemId = null;
-let currentAddItemId = null;
-let refreshInterval = null;
-let usersList = [];
-
-// ============================================================================
-// NOTIFICAÇÕES
-// ============================================================================
-
-function showNotification(message, type = 'info') {
-    const container = document.getElementById('notificationContainer');
-    if (!container) return;
-    
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    
-    const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-    notification.innerHTML = `${icons[type] || 'ℹ️'} ${escapeHtml(message)}`;
-    
-    container.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => notification.remove(), 300);
-    }, 5000);
-}
-
-// ============================================================================
-// TELA DE CADASTRO
-// ============================================================================
-
-function showRegisterScreen() {
-    const loginContainer = document.getElementById('loginContainer');
-    const registerContainer = document.getElementById('registerContainer');
-    if (loginContainer) loginContainer.style.display = 'none';
-    if (registerContainer) registerContainer.style.display = 'flex';
-    
-    // Limpar campos
-    document.getElementById('registerUsername').value = '';
-    document.getElementById('registerPassword').value = '';
-    document.getElementById('registerConfirmPassword').value = '';
-    document.getElementById('registerName').value = '';
-    document.getElementById('registerRegistration').value = '';
-    document.getElementById('registerCompany').value = '';
-}
-
-function showLoginScreenFromRegister() {
-    const loginContainer = document.getElementById('loginContainer');
-    const registerContainer = document.getElementById('registerContainer');
-    if (registerContainer) registerContainer.style.display = 'none';
-    if (loginContainer) loginContainer.style.display = 'flex';
-}
-
-async function registerUser() {
-    const username = document.getElementById('registerUsername').value.trim();
-    const password = document.getElementById('registerPassword').value;
-    const confirmPassword = document.getElementById('registerConfirmPassword').value;
-    const name = document.getElementById('registerName').value.trim();
-    const registration = document.getElementById('registerRegistration').value.trim();
-    const company = document.getElementById('registerCompany').value.trim() || 'KANBAN AUTOMAÇÃO';
-    
-    // Validações
-    if (!username || !password || !name || !registration) {
-        showNotification('Preencha todos os campos obrigatórios!', 'error');
-        return;
-    }
-    
-    if (password.length < 6) {
-        showNotification('A senha deve ter no mínimo 6 caracteres!', 'error');
-        return;
-    }
-    
-    if (password !== confirmPassword) {
-        showNotification('As senhas não conferem!', 'error');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}/users/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, name, registration, company, role: 'user' })
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Erro ao cadastrar');
-        }
-        
-        showNotification('Cadastro realizado com sucesso! Faça login.', 'success');
-        showLoginScreenFromRegister();
-        
-    } catch (error) {
-        showNotification(error.message, 'error');
-    }
-}
-
-// ============================================================================
-// GERENCIAMENTO DE USUÁRIOS (ADMIN)
-// ============================================================================
-
-async function loadUsers() {
-    if (currentUser?.role !== 'admin') return;
-    
-    try {
-        const response = await fetch(`${API_URL}/users`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        
-        if (response.ok) {
-            usersList = await response.json();
-            renderUsersList();
-        }
-    } catch (error) {
-        console.error('Erro ao carregar usuários:', error);
-    }
-}
-
-function renderUsersList() {
-    const usersListDiv = document.getElementById('usersList');
-    if (!usersListDiv) return;
-    
-    if (usersList.length === 0) {
-        usersListDiv.innerHTML = '<div class="empty-message"><i class="fas fa-users"></i><p>Nenhum usuário cadastrado</p></div>';
-        return;
-    }
-    
-    usersListDiv.innerHTML = `
-        <table class="list-table">
-            <thead>
-                <tr><th>Usuário</th><th>Nome</th><th>Matrícula</th><th>Perfil</th><th>Empresa</th><th>Status</th><th>Ações</th></tr>
-            </thead>
-            <tbody>
-                ${usersList.map(user => `
-                    <tr>
-                        <td><strong>${escapeHtml(user.username)}</strong></td>
-                        <td>${escapeHtml(user.name)}</td>
-                        <td>${escapeHtml(user.registration)}</td>
-                        <td><span class="user-role-badge ${user.role}">${user.role === 'admin' ? 'ADMIN' : 'OPERADOR'}</span></td>
-                        <td>${escapeHtml(user.company || '-')}</td>
-                        <td><span class="status-badge ${user.active ? 'active' : 'inactive'}">${user.active ? 'ATIVO' : 'INATIVO'}</span></td>
-                        <td>
-                            <button onclick="toggleUserStatus('${user._id}', ${!user.active})" class="action-btn" title="${user.active ? 'Desativar' : 'Ativar'}">
-                                <i class="fas ${user.active ? 'fa-ban' : 'fa-check-circle'}"></i>
-                            </button>
-                            <button onclick="resetUserPassword('${user._id}')" class="action-btn" title="Resetar Senha">
-                                <i class="fas fa-key"></i>
-                            </button>
-                            ${currentUser?._id !== user._id ? `<button onclick="deleteUser('${user._id}')" class="action-btn delete" title="Excluir"><i class="fas fa-trash"></i></button>` : ''}
-                        </td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-}
-
-function openUsersModal() {
-    loadUsers();
-    document.getElementById('usersModal').classList.add('active');
-}
-
-function closeUsersModal() {
-    document.getElementById('usersModal').classList.remove('active');
-}
-
-async function toggleUserStatus(userId, newStatus) {
-    try {
-        const response = await fetch(`${API_URL}/users/${userId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify({ active: newStatus })
-        });
-        
-        if (response.ok) {
-            showNotification(`Usuário ${newStatus ? 'ativado' : 'desativado'} com sucesso!`, 'success');
-            await loadUsers();
-        } else {
-            throw new Error('Erro ao alterar status');
-        }
-    } catch (error) {
-        showNotification(error.message, 'error');
-    }
-}
-
 async function resetUserPassword(userId) {
     const newPassword = prompt('Digite a nova senha (mínimo 6 caracteres):');
     if (!newPassword || newPassword.length < 6) {
@@ -853,27 +642,29 @@ function renderInventory() {
     
     if (list) {
         list.innerHTML = `
-            <table class="list-table">
-                <thead>
-                    <tr><th>Equipamento</th><th>Categoria</th><th>Qtd</th><th>Mín</th><th>Local</th><th>Ações</th></tr>
-                </thead>
-                <tbody>
-                    ${filtered.map(item => `
-                        <tr>
-                            <td><strong>${escapeHtml(item.name)}</strong></td>
-                            <td><span class="category-tag ${item.category}">${getCategoryName(item.category)}</span></td>
-                            <td style="font-weight: 600; ${item.quantity <= 2 ? 'color: var(--status-critical);' : ''}">${item.quantity}</td>
-                            <td>${item.minStock}</td>
-                            <td>${escapeHtml(item.location) || '-'}</td>
-                            <td>
-                                <button onclick="openWithdrawModal('${item._id}')" style="margin-right: 5px;" title="Retirar"><i class="fas fa-sign-out-alt"></i></button>
-                                <button onclick="openAddStockModal('${item._id}')" style="margin-right: 5px;" title="Adicionar"><i class="fas fa-plus"></i></button>
-                                ${currentUser?.role === 'admin' ? `<button onclick="editItem('${item._id}')" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="list-table">
+                    <thead>
+                        <tr><th>Equipamento</th><th>Categoria</th><th>Qtd</th><th>Mín</th><th>Local</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.map(item => `
+                            <tr>
+                                <td><strong>${escapeHtml(item.name)}</strong></td>
+                                <td><span class="category-tag ${item.category}">${getCategoryName(item.category)}</span></td>
+                                <td style="font-weight: 600; ${item.quantity <= 2 ? 'color: var(--status-critical);' : ''}">${item.quantity}</td>
+                                <td>${item.minStock}</td>
+                                <td>${escapeHtml(item.location) || '-'}</td>
+                                <td>
+                                    <button onclick="openWithdrawModal('${item._id}')" style="margin-right: 5px;" title="Retirar"><i class="fas fa-sign-out-alt"></i></button>
+                                    <button onclick="openAddStockModal('${item._id}')" style="margin-right: 5px;" title="Adicionar"><i class="fas fa-plus"></i></button>
+                                    ${currentUser?.role === 'admin' ? `<button onclick="editItem('${item._id}')" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
         `;
     }
 }
