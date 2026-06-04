@@ -30,28 +30,26 @@ if (missingEnvVars.length > 0) {
 console.log('✅ Variáveis de ambiente validadas');
 
 // ==================== MIDDLEWARES ====================
-// Configuração CORS melhorada para produção
-const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5000',
-    'https://kanban-estoque-api.onrender.com',
-    'https://kanban-estoque-frontend.onrender.com'
-];
-
+// Configuração CORS CORRIGIDA - permite todas as origens em produção
 app.use(cors({
     origin: function(origin, callback) {
-        // Permitir requisições sem origin (apps nativas, Postman)
+        // Permitir requisições sem origin (Postman, apps nativas)
         if (!origin) return callback(null, true);
         
-        // Permitir localhost em qualquer porta (desenvolvimento)
-        const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-        
-        if (isLocalhost || allowedOrigins.includes(origin)) {
+        // EM PRODUÇÃO - permitir todas as origens (resolvendo o problema do CORS)
+        if (process.env.NODE_ENV === 'production') {
             return callback(null, true);
         }
         
+        // Em desenvolvimento, permitir localhost
+        const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+        if (isLocalhost) {
+            return callback(null, true);
+        }
+        
+        // Qualquer outra origem em desenvolvimento é bloqueada
         console.warn(`⚠️ Origem bloqueada pelo CORS: ${origin}`);
-        callback(null, false);
+        callback(new Error('Bloqueado pelo CORS'), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -69,7 +67,6 @@ console.log(`📁 Servindo arquivos estáticos de: ${frontendPath}`);
 if (!fs.existsSync(frontendPath)) {
     console.error(`❌ Pasta frontend não encontrada em: ${frontendPath}`);
     console.error('   Certifique-se de que os arquivos index.html, app.js e styles.css estão na pasta "frontend"');
-    // Não encerrar em produção, apenas logar
     if (process.env.NODE_ENV !== 'production') {
         process.exit(1);
     }
@@ -78,7 +75,6 @@ if (!fs.existsSync(frontendPath)) {
 // Servir arquivos estáticos com headers corretos
 app.use(express.static(frontendPath, {
     setHeaders: (res, filePath) => {
-        // Cache para arquivos estáticos
         if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
             res.setHeader('Cache-Control', 'public, max-age=31536000');
         }
@@ -90,12 +86,8 @@ app.use(express.static(frontendPath, {
             res.setHeader('Content-Type', 'text/css');
         }
         
-        // CSP mais restritiva para produção
-        if (process.env.NODE_ENV === 'production') {
-            res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self' https://kanban-estoque-api.onrender.com");
-        } else {
-            res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline'; font-src * data:; img-src * data: blob:; connect-src * ws: wss:;");
-        }
+        // CSP mais permissiva para produção
+        res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline'; font-src * data:; img-src * data: blob:; connect-src * ws: wss:;");
     }
 }));
 
@@ -139,9 +131,6 @@ app.get('/health', (req, res) => {
 app.get('*', (req, res) => {
     const indexPath = path.join(frontendPath, 'index.html');
     if (fs.existsSync(indexPath)) {
-        if (process.env.NODE_ENV === 'production') {
-            res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self' https://kanban-estoque-api.onrender.com");
-        }
         res.sendFile(indexPath);
     } else {
         res.status(404).send('Arquivo index.html não encontrado. Verifique a estrutura de pastas.');
