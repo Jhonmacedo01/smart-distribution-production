@@ -1,3 +1,219 @@
+/* ==========================================================================
+   SISTEMA DE ESTOQUE INDUSTRIAL - VERSÃO 4.0.1
+   INTEGRADO COM HTML E CSS RESPONSIVO
+   ========================================================================== */
+
+// URL da API - Configuração automática
+const API_URL = (() => {
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        return '/api';
+    }
+    return 'http://localhost:3000/api';
+})();
+
+let currentUser = null;
+let authToken = null;
+let inventory = [];
+let historyData = [];
+let currentCategory = 'all';
+let currentSearch = '';
+let currentView = 'grid';
+let companyConfig = { name: 'KANBAN AUTOMAÇÃO' };
+let currentWithdrawItemId = null;
+let currentAddItemId = null;
+let refreshInterval = null;
+let usersList = [];
+
+// ============================================================================
+// NOTIFICAÇÕES
+// ============================================================================
+
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('notificationContainer');
+    if (!container) return;
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+    notification.innerHTML = `${icons[type] || 'ℹ️'} ${escapeHtml(message)}`;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
+}
+
+// ============================================================================
+// TELA DE CADASTRO
+// ============================================================================
+
+function showRegisterScreen() {
+    const loginContainer = document.getElementById('loginContainer');
+    const registerContainer = document.getElementById('registerContainer');
+    if (loginContainer) loginContainer.style.display = 'none';
+    if (registerContainer) registerContainer.style.display = 'flex';
+    
+    // Limpar campos
+    document.getElementById('registerUsername').value = '';
+    document.getElementById('registerPassword').value = '';
+    document.getElementById('registerConfirmPassword').value = '';
+    document.getElementById('registerName').value = '';
+    document.getElementById('registerRegistration').value = '';
+    document.getElementById('registerCompany').value = '';
+}
+
+function showLoginScreenFromRegister() {
+    const loginContainer = document.getElementById('loginContainer');
+    const registerContainer = document.getElementById('registerContainer');
+    if (registerContainer) registerContainer.style.display = 'none';
+    if (loginContainer) loginContainer.style.display = 'flex';
+}
+
+async function registerUser() {
+    const username = document.getElementById('registerUsername').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+    const name = document.getElementById('registerName').value.trim();
+    const registration = document.getElementById('registerRegistration').value.trim();
+    const company = document.getElementById('registerCompany').value.trim() || 'KANBAN AUTOMAÇÃO';
+    
+    if (!username || !password || !name || !registration) {
+        showNotification('Preencha todos os campos obrigatórios!', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showNotification('A senha deve ter no mínimo 6 caracteres!', 'error');
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        showNotification('As senhas não conferem!', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/users`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ username, password, name, registration, company, role: 'user' })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao cadastrar');
+        }
+        
+        showNotification('Cadastro realizado com sucesso! Faça login.', 'success');
+        showLoginScreenFromRegister();
+        
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+// ============================================================================
+// GERENCIAMENTO DE USUÁRIOS (ADMIN)
+// ============================================================================
+
+async function loadUsers() {
+    if (currentUser?.role !== 'admin') return;
+    
+    try {
+        const response = await fetch(`${API_URL}/users`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.ok) {
+            usersList = await response.json();
+            renderUsersList();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar usuários:', error);
+    }
+}
+
+function renderUsersList() {
+    const usersListDiv = document.getElementById('usersList');
+    if (!usersListDiv) return;
+    
+    if (usersList.length === 0) {
+        usersListDiv.innerHTML = '<div class="empty-message"><i class="fas fa-users"></i><p>Nenhum usuário cadastrado</p></div>';
+        return;
+    }
+    
+    usersListDiv.innerHTML = `
+        <div class="table-wrapper">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th>Usuário</th><th>Nome</th><th>Matrícula</th><th>Perfil</th><th>Empresa</th><th>Status</th><th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${usersList.map(user => `
+                        <tr>
+                            <td><strong>${escapeHtml(user.username)}</strong></td>
+                            <td>${escapeHtml(user.name)}</td>
+                            <td>${escapeHtml(user.registration)}</td>
+                            <td><span class="user-role-badge ${user.role}">${user.role === 'admin' ? 'ADMIN' : 'OPERADOR'}</span></td>
+                            <td>${escapeHtml(user.company || '-')}</td>
+                            <td><span class="status-badge ${user.active ? 'active' : 'inactive'}">${user.active ? 'ATIVO' : 'INATIVO'}</span></td>
+                            <td>
+                                <button onclick="toggleUserStatus('${user._id}', ${!user.active})" class="action-btn" title="${user.active ? 'Desativar' : 'Ativar'}">
+                                    <i class="fas ${user.active ? 'fa-ban' : 'fa-check-circle'}"></i>
+                                </button>
+                                <button onclick="resetUserPassword('${user._id}')" class="action-btn" title="Resetar Senha">
+                                    <i class="fas fa-key"></i>
+                                </button>
+                                ${currentUser?._id !== user._id ? `<button onclick="deleteUser('${user._id}')" class="action-btn delete" title="Excluir"><i class="fas fa-trash"></i></button>` : ''}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function openUsersModal() {
+    loadUsers();
+    document.getElementById('usersModal').classList.add('active');
+}
+
+function closeUsersModal() {
+    document.getElementById('usersModal').classList.remove('active');
+}
+
+async function toggleUserStatus(userId, newStatus) {
+    try {
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ active: newStatus })
+        });
+        
+        if (response.ok) {
+            showNotification(`Usuário ${newStatus ? 'ativado' : 'desativado'} com sucesso!`, 'success');
+            await loadUsers();
+        } else {
+            throw new Error('Erro ao alterar status');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
 async function resetUserPassword(userId) {
     const newPassword = prompt('Digite a nova senha (mínimo 6 caracteres):');
     if (!newPassword || newPassword.length < 6) {
@@ -92,7 +308,6 @@ async function addNewUser() {
 
 async function login(username, password) {
     console.log('🔐 Tentando login com:', username);
-    console.log('📍 API URL:', API_URL);
     
     try {
         const response = await fetch(`${API_URL}/auth/login`, {
@@ -104,8 +319,6 @@ async function login(username, password) {
             body: JSON.stringify({ username, password })
         });
 
-        console.log('📡 Status da resposta:', response.status);
-
         if (!response.ok) {
             let errorMsg = 'Erro no login';
             try {
@@ -116,7 +329,6 @@ async function login(username, password) {
         }
 
         const data = await response.json();
-        console.log('✅ Login bem-sucedido!');
         
         currentUser = data.user;
         authToken = data.token;
@@ -201,15 +413,14 @@ async function verifyToken() {
 
 async function refreshData() {
     if (!authToken) return;
-    console.log('🔄 Atualizando dados automaticamente...');
+    console.log('🔄 Atualizando dados...');
     try {
         await Promise.all([loadInventory(), loadHistory()]);
         renderInventory();
         updateStats();
         updateMetrics();
-        console.log('✅ Dados atualizados');
     } catch (error) {
-        console.error('❌ Erro ao atualizar dados:', error);
+        console.error('❌ Erro ao atualizar:', error);
     }
 }
 
@@ -242,7 +453,7 @@ async function loadInventory() {
         
         if (response.ok) {
             inventory = await response.json();
-            console.log(`📦 Inventário carregado: ${inventory.length} itens`);
+            console.log(`📦 Inventário: ${inventory.length} itens`);
         } else if (response.status === 401) {
             logout();
         } else {
@@ -265,8 +476,8 @@ async function loadHistory() {
         
         if (response.ok) {
             const data = await response.json();
-            history = data.history || data;
-            console.log(`📜 Histórico carregado: ${history.length} registros`);
+            historyData = data.history || data;
+            console.log(`📜 Histórico: ${historyData.length} registros`);
         }
     } catch (error) {
         console.error('Erro ao carregar histórico:', error);
@@ -395,7 +606,6 @@ QUANTIDADE: ${quantity} unidade(s)
 
 ========================================================================
 Documento gerado eletronicamente - Válido como comprovante
-Sistema de controle de estoque.
 Realizado por: ${currentUser?.name || 'Sistema'}
 ========================================================================`;
     
@@ -424,7 +634,6 @@ OBSERVAÇÃO: ${observation || 'N/A'}
 
 ========================================================================
 Documento gerado eletronicamente - Válido como comprovante
-Sistema de controle de estoque.
 Realizado por: ${currentUser?.name || 'Sistema'}
 ========================================================================`;
     
@@ -545,7 +754,7 @@ async function clearHistory() {
         return;
     }
     
-    if (!confirm('⚠️ ATENÇÃO!\n\nLimpar todo o histórico?\nEsta ação não pode ser desfeita e todos os registros serão perdidos permanentemente.')) return;
+    if (!confirm('⚠️ ATENÇÃO!\n\nLimpar todo o histórico?\nEsta ação não pode ser desfeita!')) return;
     
     try {
         const response = await fetch(`${API_URL}/history/clear`, {
@@ -607,6 +816,7 @@ function renderInventory() {
         return;
     }
     
+    // Grid View
     if (grid) {
         grid.innerHTML = filtered.map(item => {
             const isCritical = item.quantity <= 2;
@@ -640,6 +850,7 @@ function renderInventory() {
         }).join('');
     }
     
+    // List View
     if (list) {
         list.innerHTML = `
             <div class="table-wrapper">
@@ -656,8 +867,8 @@ function renderInventory() {
                                 <td>${item.minStock}</td>
                                 <td>${escapeHtml(item.location) || '-'}</td>
                                 <td>
-                                    <button onclick="openWithdrawModal('${item._id}')" style="margin-right: 5px;" title="Retirar"><i class="fas fa-sign-out-alt"></i></button>
-                                    <button onclick="openAddStockModal('${item._id}')" style="margin-right: 5px;" title="Adicionar"><i class="fas fa-plus"></i></button>
+                                    <button onclick="openWithdrawModal('${item._id}')" title="Retirar"><i class="fas fa-sign-out-alt"></i></button>
+                                    <button onclick="openAddStockModal('${item._id}')" title="Adicionar"><i class="fas fa-plus"></i></button>
                                     ${currentUser?.role === 'admin' ? `<button onclick="editItem('${item._id}')" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
                                 </td>
                             </tr>
@@ -674,12 +885,12 @@ function renderHistory() {
     
     if (!tbody) return;
     
-    if (history.length === 0) {
+    if (historyData.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" class="empty-message"><i class="fas fa-inbox"></i> Nenhuma movimentação</td></tr>`;
         return;
     }
     
-    tbody.innerHTML = history.map(record => `
+    tbody.innerHTML = historyData.map(record => `
         <tr>
             <td>${new Date(record.createdAt).toLocaleString('pt-BR')}</td>
             <td><strong>${escapeHtml(record.om)}</strong></td>
@@ -688,7 +899,7 @@ function renderHistory() {
             <td>${record.type === 'retirada' ? '-' : '+'} ${record.quantity}</td>
             <td><span class="type-badge ${record.type}">${record.type === 'retirada' ? 'RETIRADA' : 'ADIÇÃO'}</span></td>
             <td>${escapeHtml(record.collaboratorName || record.responsible || record.performedBy || '-')}</td>
-            <td><button class="reprint-btn" onclick="reprintReceipt('${record._id}')" title="Reimprimir comprovante"><i class="fas fa-print"></i></button></td>
+            <td><button class="reprint-btn" onclick="reprintReceipt('${record._id}')" title="Reimprimir"><i class="fas fa-print"></i></button></td>
         </tr>
     `).join('');
 }
@@ -708,7 +919,7 @@ function updateStats() {
 }
 
 function updateMetrics() {
-    const totalMovements = history.length;
+    const totalMovements = historyData.length;
     const totalUnits = inventory.reduce((sum, item) => sum + item.quantity, 0);
     const turnover = totalMovements > 0 && totalUnits > 0 ? ((totalMovements / totalUnits) * 100).toFixed(1) : 0;
     
@@ -836,7 +1047,7 @@ function showAlertsModal() {
     if (!modalBody) return;
     
     if (alertItems.length === 0) {
-        modalBody.innerHTML = `<div class="empty-message"><i class="fas fa-check-circle" style="font-size: 3rem; color: var(--status-ok);"></i><p>Nenhum item em alerta!</p></div>`;
+        modalBody.innerHTML = `<div class="empty-message"><i class="fas fa-check-circle"></i><p>Nenhum item em alerta!</p></div>`;
     } else {
         modalBody.innerHTML = `
             <div style="margin-bottom: 1rem;"><strong>${alertItems.length}</strong> item(ns) abaixo do estoque mínimo:</div>
@@ -937,7 +1148,7 @@ function saveItem() {
 }
 
 function reprintReceipt(historyId) {
-    const record = history.find(h => h._id === historyId);
+    const record = historyData.find(h => h._id === historyId);
     if (!record) return;
     
     if (record.type === 'retirada') {
@@ -1011,11 +1222,11 @@ function toggleTheme() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     if (isDark) {
         document.documentElement.removeAttribute('data-theme');
-        localStorage.setItem('cisco_theme', 'light');
+        localStorage.setItem('theme', 'light');
         updateThemeIcon(false);
     } else {
         document.documentElement.setAttribute('data-theme', 'dark');
-        localStorage.setItem('cisco_theme', 'dark');
+        localStorage.setItem('theme', 'dark');
         updateThemeIcon(true);
     }
 }
@@ -1044,7 +1255,7 @@ function startClock() {
 }
 
 // ============================================================================
-// INTERFACE DE LOGIN/APP
+// INTERFACE
 // ============================================================================
 
 function showLoginScreen() {
@@ -1167,7 +1378,7 @@ function setupEventListeners() {
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
     if (clearHistoryBtn) clearHistoryBtn.onclick = clearHistory;
     
-    // Gerenciar Usuários (Admin)
+    // Usuários
     const manageUsersBtn = document.getElementById('manageUsersBtn');
     if (manageUsersBtn) manageUsersBtn.onclick = openUsersModal;
     
@@ -1220,7 +1431,7 @@ function setupEventListeners() {
         });
     });
     
-    // Modal fechar com ESC
+    // Fechar modais com ESC
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.modal-overlay.active').forEach(modal => {
@@ -1245,10 +1456,8 @@ function setupEventListeners() {
 
 async function init() {
     console.log('🚀 Inicializando aplicação...');
-    console.log(`📍 API URL: ${API_URL}`);
-    console.log(`🌍 Ambiente: ${window.location.hostname}`);
     
-    const savedTheme = localStorage.getItem('cisco_theme');
+    const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         updateThemeIcon(true);
