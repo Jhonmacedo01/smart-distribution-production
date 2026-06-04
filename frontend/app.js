@@ -1,15 +1,14 @@
 /* ==========================================================================
    SISTEMA DE ESTOQUE INDUSTRIAL - VERSÃO 4.0.1 PRODUCTION
+   COM TELA DE CADASTRO E USUÁRIOS OPERACIONAIS
    ========================================================================== */
 
 // URL da API - Configuração automática
 const API_URL = (() => {
     // Em produção, usar a URL do backend no Render
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        // Para deploy unificado (backend servindo frontend)
         return '/api';
     }
-    // Desenvolvimento local
     return 'http://localhost:3000/api';
 })();
 
@@ -24,6 +23,7 @@ let companyConfig = { name: 'KANBAN AUTOMAÇÃO' };
 let currentWithdrawItemId = null;
 let currentAddItemId = null;
 let refreshInterval = null;
+let usersList = [];
 
 // ============================================================================
 // NOTIFICAÇÕES
@@ -46,6 +46,255 @@ function showNotification(message, type = 'info') {
         notification.style.transform = 'translateX(100%)';
         setTimeout(() => notification.remove(), 300);
     }, 5000);
+}
+
+// ============================================================================
+// TELA DE CADASTRO
+// ============================================================================
+
+function showRegisterScreen() {
+    const loginContainer = document.getElementById('loginContainer');
+    const registerContainer = document.getElementById('registerContainer');
+    if (loginContainer) loginContainer.style.display = 'none';
+    if (registerContainer) registerContainer.style.display = 'flex';
+    
+    // Limpar campos
+    document.getElementById('registerUsername').value = '';
+    document.getElementById('registerPassword').value = '';
+    document.getElementById('registerConfirmPassword').value = '';
+    document.getElementById('registerName').value = '';
+    document.getElementById('registerRegistration').value = '';
+    document.getElementById('registerCompany').value = '';
+}
+
+function showLoginScreenFromRegister() {
+    const loginContainer = document.getElementById('loginContainer');
+    const registerContainer = document.getElementById('registerContainer');
+    if (registerContainer) registerContainer.style.display = 'none';
+    if (loginContainer) loginContainer.style.display = 'flex';
+}
+
+async function registerUser() {
+    const username = document.getElementById('registerUsername').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+    const name = document.getElementById('registerName').value.trim();
+    const registration = document.getElementById('registerRegistration').value.trim();
+    const company = document.getElementById('registerCompany').value.trim() || 'KANBAN AUTOMAÇÃO';
+    
+    // Validações
+    if (!username || !password || !name || !registration) {
+        showNotification('Preencha todos os campos obrigatórios!', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showNotification('A senha deve ter no mínimo 6 caracteres!', 'error');
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        showNotification('As senhas não conferem!', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/users/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, name, registration, company, role: 'user' })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao cadastrar');
+        }
+        
+        showNotification('Cadastro realizado com sucesso! Faça login.', 'success');
+        showLoginScreenFromRegister();
+        
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+// ============================================================================
+// GERENCIAMENTO DE USUÁRIOS (ADMIN)
+// ============================================================================
+
+async function loadUsers() {
+    if (currentUser?.role !== 'admin') return;
+    
+    try {
+        const response = await fetch(`${API_URL}/users`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.ok) {
+            usersList = await response.json();
+            renderUsersList();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar usuários:', error);
+    }
+}
+
+function renderUsersList() {
+    const usersListDiv = document.getElementById('usersList');
+    if (!usersListDiv) return;
+    
+    if (usersList.length === 0) {
+        usersListDiv.innerHTML = '<div class="empty-message"><i class="fas fa-users"></i><p>Nenhum usuário cadastrado</p></div>';
+        return;
+    }
+    
+    usersListDiv.innerHTML = `
+        <table class="list-table">
+            <thead>
+                <tr><th>Usuário</th><th>Nome</th><th>Matrícula</th><th>Perfil</th><th>Empresa</th><th>Status</th><th>Ações</th></tr>
+            </thead>
+            <tbody>
+                ${usersList.map(user => `
+                    <tr>
+                        <td><strong>${escapeHtml(user.username)}</strong></td>
+                        <td>${escapeHtml(user.name)}</td>
+                        <td>${escapeHtml(user.registration)}</td>
+                        <td><span class="user-role-badge ${user.role}">${user.role === 'admin' ? 'ADMIN' : 'OPERADOR'}</span></td>
+                        <td>${escapeHtml(user.company || '-')}</td>
+                        <td><span class="status-badge ${user.active ? 'active' : 'inactive'}">${user.active ? 'ATIVO' : 'INATIVO'}</span></td>
+                        <td>
+                            <button onclick="toggleUserStatus('${user._id}', ${!user.active})" class="action-btn" title="${user.active ? 'Desativar' : 'Ativar'}">
+                                <i class="fas ${user.active ? 'fa-ban' : 'fa-check-circle'}"></i>
+                            </button>
+                            <button onclick="resetUserPassword('${user._id}')" class="action-btn" title="Resetar Senha">
+                                <i class="fas fa-key"></i>
+                            </button>
+                            ${currentUser?._id !== user._id ? `<button onclick="deleteUser('${user._id}')" class="action-btn delete" title="Excluir"><i class="fas fa-trash"></i></button>` : ''}
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function openUsersModal() {
+    loadUsers();
+    document.getElementById('usersModal').classList.add('active');
+}
+
+function closeUsersModal() {
+    document.getElementById('usersModal').classList.remove('active');
+}
+
+async function toggleUserStatus(userId, newStatus) {
+    try {
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ active: newStatus })
+        });
+        
+        if (response.ok) {
+            showNotification(`Usuário ${newStatus ? 'ativado' : 'desativado'} com sucesso!`, 'success');
+            await loadUsers();
+        } else {
+            throw new Error('Erro ao alterar status');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+async function resetUserPassword(userId) {
+    const newPassword = prompt('Digite a nova senha (mínimo 6 caracteres):');
+    if (!newPassword || newPassword.length < 6) {
+        showNotification('Senha deve ter no mínimo 6 caracteres!', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/users/${userId}/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ newPassword })
+        });
+        
+        if (response.ok) {
+            showNotification('Senha redefinida com sucesso!', 'success');
+        } else {
+            throw new Error('Erro ao redefinir senha');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('⚠️ Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita!')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.ok) {
+            showNotification('Usuário excluído com sucesso!', 'success');
+            await loadUsers();
+        } else {
+            throw new Error('Erro ao excluir usuário');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+async function addNewUser() {
+    const username = prompt('Digite o nome de usuário:');
+    if (!username) return;
+    
+    const name = prompt('Digite o nome completo:');
+    if (!name) return;
+    
+    const registration = prompt('Digite a matrícula:');
+    if (!registration) return;
+    
+    const password = prompt('Digite a senha (mínimo 6 caracteres):');
+    if (!password || password.length < 6) {
+        showNotification('Senha deve ter no mínimo 6 caracteres!', 'warning');
+        return;
+    }
+    
+    const role = confirm('Usuário ADMIN? (OK para SIM, Cancelar para OPERADOR)') ? 'admin' : 'user';
+    const company = prompt('Digite a empresa (opcional):') || 'KANBAN AUTOMAÇÃO';
+    
+    try {
+        const response = await fetch(`${API_URL}/users`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ username, password, name, registration, role, company })
+        });
+        
+        if (response.ok) {
+            showNotification('Usuário criado com sucesso!', 'success');
+            await loadUsers();
+        } else {
+            const error = await response.json();
+            throw new Error(error.error);
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
 }
 
 // ============================================================================
@@ -83,11 +332,10 @@ async function login(username, password) {
         currentUser = data.user;
         authToken = data.token;
         
-        // Salvar com expiração
         const tokenData = {
             token: authToken,
             user: currentUser,
-            expires: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 dias
+            expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
         };
         
         localStorage.setItem('authToken', JSON.stringify(tokenData));
@@ -96,7 +344,6 @@ async function login(username, password) {
         showMainApp();
         showNotification(`Bem-vindo, ${currentUser.name}!`, 'success');
         
-        // Iniciar refresh automático (a cada 5 minutos)
         if (refreshInterval) clearInterval(refreshInterval);
         refreshInterval = setInterval(refreshData, 5 * 60 * 1000);
         
@@ -129,7 +376,6 @@ async function verifyToken() {
     try {
         const { token, expires } = JSON.parse(tokenData);
         
-        // Verificar se token expirou
         if (Date.now() > expires) {
             localStorage.removeItem('authToken');
             return false;
@@ -150,7 +396,6 @@ async function verifyToken() {
             await loadInitialData();
             showMainApp();
             
-            // Iniciar refresh automático
             if (refreshInterval) clearInterval(refreshInterval);
             refreshInterval = setInterval(refreshData, 5 * 60 * 1000);
             
@@ -165,7 +410,6 @@ async function verifyToken() {
     }
 }
 
-// Função para refresh automático dos dados
 async function refreshData() {
     if (!authToken) return;
     console.log('🔄 Atualizando dados automaticamente...');
@@ -242,7 +486,7 @@ async function loadHistory() {
 }
 
 // ============================================================================
-// MOVIMENTAÇÕES (com retry e validação)
+// MOVIMENTAÇÕES
 // ============================================================================
 
 async function withdrawItem(itemId, data) {
@@ -408,7 +652,7 @@ function downloadReceipt(content, filename) {
 }
 
 // ============================================================================
-// CRUD (Admin only) - com validação melhorada
+// CRUD (Admin only)
 // ============================================================================
 
 async function addItem(itemData) {
@@ -574,7 +818,6 @@ function renderInventory() {
         return;
     }
     
-    // Grid View
     if (grid) {
         grid.innerHTML = filtered.map(item => {
             const isCritical = item.quantity <= 2;
@@ -608,7 +851,6 @@ function renderInventory() {
         }).join('');
     }
     
-    // List View
     if (list) {
         list.innerHTML = `
             <table class="list-table">
@@ -1016,11 +1258,13 @@ function startClock() {
 
 function showLoginScreen() {
     const loginContainer = document.getElementById('loginContainer');
+    const registerContainer = document.getElementById('registerContainer');
     const appContainer = document.getElementById('appContainer');
+    
     if (loginContainer) loginContainer.style.display = 'flex';
+    if (registerContainer) registerContainer.style.display = 'none';
     if (appContainer) appContainer.style.display = 'none';
     
-    // Limpar campos de login
     const usernameInput = document.getElementById('loginUsername');
     const passwordInput = document.getElementById('loginPassword');
     if (usernameInput) usernameInput.value = '';
@@ -1029,8 +1273,11 @@ function showLoginScreen() {
 
 function showMainApp() {
     const loginContainer = document.getElementById('loginContainer');
+    const registerContainer = document.getElementById('registerContainer');
     const appContainer = document.getElementById('appContainer');
+    
     if (loginContainer) loginContainer.style.display = 'none';
+    if (registerContainer) registerContainer.style.display = 'none';
     if (appContainer) appContainer.style.display = 'block';
     
     const userNameDisplay = document.getElementById('userNameDisplay');
@@ -1041,7 +1288,6 @@ function showMainApp() {
     if (userRole) userRole.textContent = currentUser?.role === 'admin' ? 'Administrador' : 'Operador';
     if (companyNameDisplay) companyNameDisplay.textContent = companyConfig.name;
     
-    // Mostrar/esconder elementos de admin
     const adminElements = document.querySelectorAll('.admin-only');
     if (currentUser?.role === 'admin') {
         adminElements.forEach(el => el.style.display = 'inline-flex');
@@ -1082,6 +1328,15 @@ function setupEventListeners() {
         if (e.key === 'Enter') await doLogin();
     });
     
+    // Cadastro
+    const showRegisterBtn = document.getElementById('showRegisterBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const backToLoginBtn = document.getElementById('backToLoginBtn');
+    
+    if (showRegisterBtn) showRegisterBtn.onclick = showRegisterScreen;
+    if (registerBtn) registerBtn.onclick = registerUser;
+    if (backToLoginBtn) backToLoginBtn.onclick = showLoginScreenFromRegister;
+    
     // Logout
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
@@ -1120,6 +1375,13 @@ function setupEventListeners() {
     
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
     if (clearHistoryBtn) clearHistoryBtn.onclick = clearHistory;
+    
+    // Gerenciar Usuários (Admin)
+    const manageUsersBtn = document.getElementById('manageUsersBtn');
+    if (manageUsersBtn) manageUsersBtn.onclick = openUsersModal;
+    
+    const addUserBtn = document.getElementById('addUserBtn');
+    if (addUserBtn) addUserBtn.onclick = addNewUser;
     
     // Tema
     const themeToggle = document.getElementById('themeToggle');
@@ -1195,14 +1457,12 @@ async function init() {
     console.log(`📍 API URL: ${API_URL}`);
     console.log(`🌍 Ambiente: ${window.location.hostname}`);
     
-    // Carregar tema salvo
     const savedTheme = localStorage.getItem('cisco_theme');
     if (savedTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         updateThemeIcon(true);
     }
     
-    // Carregar configuração da empresa
     const savedCompany = localStorage.getItem('cisco_company_config');
     if (savedCompany) {
         companyConfig = JSON.parse(savedCompany);
@@ -1210,17 +1470,14 @@ async function init() {
         if (companyDisplay) companyDisplay.textContent = companyConfig.name;
     }
 
-    // Configurar eventos
     setupEventListeners();
     
-    // Verificar token
     const tokenValid = await verifyToken();
     if (!tokenValid) {
         showLoginScreen();
     }
 }
 
-// Inicializar quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', init);
 
 // Expor funções globalmente
@@ -1236,3 +1493,9 @@ window.closeCompanyModal = closeCompanyModal;
 window.closeAlertsModal = closeAlertsModal;
 window.openAddItemModal = openAddItemModal;
 window.saveItem = saveItem;
+window.openUsersModal = openUsersModal;
+window.closeUsersModal = closeUsersModal;
+window.toggleUserStatus = toggleUserStatus;
+window.resetUserPassword = resetUserPassword;
+window.deleteUser = deleteUser;
+window.addNewUser = addNewUser;
