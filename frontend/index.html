@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Controle Inteligente | KANBAN ESTOQUE INDUSTRIAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="loginContainer" class="login-container" style="display: flex;">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">
+                    <i class="fas fa-network-wired"></i>
+                    <i class="fas fa-charging-station"></i>
+                </div>
+                <h1>CONTROLE INTELIGENTE</h1>
+                <p>KANBAN · ESTOQUE · INDUSTRIAL</p>
+            </div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> USUÁRIO</label>
+                    <input type="text" id="loginUsername" placeholder="Digite seu usuário">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> SENHA</label>
+                    <input type="password" id="loginPassword" placeholder="Digite sua senha">
+                </div>
+                <button class="btn-cisco" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> ENTRAR
+                </button>
+            </div>
+            <div class="login-footer">
+                <span>Sistema de Controle de Estoque Industrial</span>
+                <span>v4.0.0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Principal -->
+    <div id="appContainer" class="app-container" style="display: none;">
+        <!-- CISCO CATALYST HEADER -->
+        <header class="cisco-header">
+            <div class="header-bg-pattern"></div>
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">
+                        <i class="fas fa-network-wired"></i>
+                        <i class="fas fa-charging-station"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>CONTROLE INTELIGENTE</h1>
+                        <p>KANBAN · ESTOQUE · INDUSTRIAL</p>
+                    </div>
+                    <div class="version-badge">v4.0.0</div>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-microchip"></i>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalItemsCount">0</span>
+                            <span class="stat-label">Equipamentos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-cubes"></i>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalUnitsCount">0</span>
+                            <span class="stat-label">Unidades</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-alert" id="alertStatCard" style="cursor: pointer;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div class="stat-info">
+                            <span class="stat-value" id="alertsCount">0</span>
+                            <span class="stat-label">Alertas</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="userNameDisplay"></span>
+                        <span class="user-badge" id="userRole"></span>
+                        <button class="logout-btn" id="logoutBtn" title="Sair">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                    <button class="theme-toggle" id="themeToggle" title="Alternar tema">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="live-clock">
+                        <i class="far fa-clock"></i>
+                        <span id="liveClock">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-bottom">
+                <div class="company-info">
+                    <i class="fas fa-building"></i>
+                    <span id="companyNameDisplay">KANBAN AUTOMAÇÃO</span>
+                    <button class="edit-company" id="editCompanyBtn" title="Editar Empresa">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                </div>
+                <div class="system-status">
+                    <span class="status-dot online"></span>
+                    <span>Sistema Online</span>
+                    <span class="separator">|</span>
+                    <i class="fas fa-database"></i>
+                    <span>MongoDB Atlas</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- KANBAN TOOLBAR -->
+        <div class="kanban-toolbar">
+            <div class="search-area">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar equipamento, modelo ou localização...">
+                    <button class="clear-search" id="clearSearchBtn" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="filters-area">
+                <div class="filter-group">
+                    <label><i class="fas fa-layer-group"></i> Categoria</label>
+                    <div class="filter-chips" id="categoryFilters">
+                        <button class="filter-chip active" data-category="all">TODOS</button>
+                        <button class="filter-chip" data-category="switch">SWITCH</button>
+                        <button class="filter-chip" data-category="gnss">GNSS/GPS</button>
+                        <button class="filter-chip" data-category="radio">RÁDIO</button>
+                        <button class="filter-chip" data-category="plc">PLC</button>
+                        <button class="filter-chip" data-category="fonte">FONTE</button>
+                        <button class="filter-chip" data-category="cftv">CFTV</button>
+                        <button class="filter-chip" data-category="fibra">FIBRA</button>
+                        <button class="filter-chip" data-category="outros">OUTROS</button>
+                    </div>
+                </div>
+            </div>
+            <div class="actions-area">
+                <button class="btn-cisco-outline admin-only" id="manageUsersBtn" style="display: none;">
+                    <i class="fas fa-users"></i> USUÁRIOS
+                </button>
+                <button class="btn-cisco-outline" id="exportCsvBtn">
+                    <i class="fas fa-file-csv"></i> Exportar CSV
+                </button>
+                <button class="btn-cisco admin-only" id="addItemBtn" style="display: none;">
+                    <i class="fas fa-plus"></i> NOVO EQUIPAMENTO
+                </button>
+            </div>
+        </div>
+
+        <!-- KANBAN METRICS DASHBOARD -->
+        <div class="kanban-metrics">
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="metric-content">
+                    <span class="metric-label">Rotatividade</span>
+                    <span class="metric-value" id="turnoverRate">0%</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-boxes"></i></div>
+                <div class="metric-content">
+                    <span class="metric-label">Categorias</span>
+                    <span class="metric-value" id="categoriesCount">0</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-truck"></i></div>
+                <div class="metric-content">
+                    <span class="metric-label">Movimentações</span>
+                    <span class="metric-value" id="totalMovements">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVENTORY GRID -->
+        <div class="inventory-section">
+            <div class="section-header">
+                <h2><i class="fas fa-warehouse"></i> ESTOQUE INDUSTRIAL</h2>
+                <div class="view-options">
+                    <button class="view-btn active" data-view="grid">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button class="view-btn" data-view="list">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="inventory-grid" id="inventoryGrid"></div>
+            <div class="inventory-list" id="inventoryList" style="display: none;"></div>
+        </div>
+
+        <!-- HISTORY SECTION -->
+        <div class="history-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i> HISTÓRICO DE MOVIMENTAÇÕES</h2>
+                <div class="history-actions">
+                    <button class="btn-cisco-outline small" id="exportHistoryBtn">
+                        <i class="fas fa-print"></i> Relatório
+                    </button>
+                    <button class="btn-cisco-outline small admin-only" id="clearHistoryBtn" style="display: none;">
+                        <i class="fas fa-trash-alt"></i> Limpar
+                    </button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table history-table">
+                    <thead>
+                        <tr><th>DATA/HORA</th><th>OM</th><th>EMPRESA</th><th>EQUIPAMENTO</th><th>QTD</th><th>TIPO</th><th>RESPONSÁVEL</th><th>AÇÕES</th></tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr><td colspan="8" class="empty-message"><i class="fas fa-inbox"></i> Nenhuma movimentação registrada</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="cisco-footer">
+            <div class="footer-left"><span class="status-dot online"></span><span>Controle Inteligente</span></div>
+            <div class="footer-center"><i class="fas fa-shield-alt"></i> Dados criptografados</div>
+            <div class="footer-right"><span>&copy; 2026 - KANBAN Industrial</span></div>
+        </footer>
+    </div>
+
+    <!-- MODAIS (Mantidos do original) -->
+    <div class="modal-overlay" id="itemModal"><div class="modal-container"><div class="modal-header"><h3 id="modalTitle"><i class="fas fa-microchip"></i> Equipamento</h3><button class="modal-close" onclick="closeModal()">&times;</button></div><div class="modal-body"><input type="hidden" id="itemId"><div class="form-group"><label>Nome do Equipamento *</label><input type="text" id="itemName" placeholder="Ex: Cisco IE 3200"></div><div class="form-row"><div class="form-group"><label>Categoria</label><select id="itemCategory"><option value="switch">Switch Industrial</option><option value="gnss">GNSS/GPS</option><option value="radio">Rádio</option><option value="plc">PLC</option><option value="fonte">Fonte</option><option value="cftv">CFTV</option><option value="fibra">Fibra</option><option value="outros">Outros</option></select></div><div class="form-group"><label>Estoque Mínimo</label><input type="number" id="itemMinStock" value="5" min="1"></div></div><div class="form-row"><div class="form-group"><label>Quantidade</label><input type="number" id="itemQuantity" value="0" min="0"></div><div class="form-group"><label>Localização</label><input type="text" id="itemLocation" placeholder="Local"></div></div><div class="form-group"><label>Observações</label><textarea id="itemNotes" rows="2"></textarea></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeModal()">Cancelar</button><button class="btn-cisco" id="saveItemBtn">Salvar</button></div></div></div>
+
+    <div class="modal-overlay" id="withdrawModal"><div class="modal-container"><div class="modal-header"><h3><i class="fas fa-sign-out-alt"></i> Retirada de Material</h3><button class="modal-close" onclick="closeWithdrawModal()">&times;</button></div><div class="modal-body"><div class="form-group"><label>Empresa *</label><input type="text" id="withdrawCompany" placeholder="Nome da Empresa"></div><div class="form-group"><label>Ordem de Manutenção (OM) *</label><input type="text" id="withdrawOm" placeholder="Ex: 2026051234"></div><div class="form-group"><label>Nome do Colaborador *</label><input type="text" id="withdrawName" placeholder="Nome completo"></div><div class="form-group"><label>Matrícula *</label><input type="text" id="withdrawRegistration" placeholder="Ex: 421144"></div><div class="form-group"><label>Atividade *</label><textarea id="withdrawActivity" rows="2" placeholder="Ex: CORRETIVA, PREVENTIVA..."></textarea></div><div class="info-card"><div class="info-row"><span>Equipamento:</span><strong id="withdrawItemName">-</strong></div><div class="info-row"><span>Disponível:</span><strong id="availableQty">0</strong></div></div><div class="form-group"><label>Quantidade</label><input type="number" id="withdrawQty" min="1" value="1"></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeWithdrawModal()">Cancelar</button><button class="btn-danger" id="confirmWithdrawBtn">Confirmar Retirada</button></div></div></div>
+
+    <div class="modal-overlay" id="addStockModal"><div class="modal-container"><div class="modal-header"><h3><i class="fas fa-plus-circle"></i> Adição ao Estoque</h3><button class="modal-close" onclick="closeAddStockModal()">&times;</button></div><div class="modal-body"><div class="form-group"><label>Empresa *</label><input type="text" id="addCompany" placeholder="Nome da Empresa"></div><div class="form-group"><label>Funcionário Responsável *</label><input type="text" id="addResponsible" placeholder="Nome do responsável"></div><div class="form-group"><label>OM ou Nota Fiscal *</label><input type="text" id="addOmNota" placeholder="Número da OM ou NF"></div><div class="info-card"><div class="info-row"><span>Equipamento:</span><strong id="addItemName">-</strong></div></div><div class="form-group"><label>Quantidade *</label><input type="number" id="addQty" min="1" value="1"></div><div class="form-group"><label>Observação</label><textarea id="addObservation" rows="2" placeholder="Informações adicionais..."></textarea></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeAddStockModal()">Cancelar</button><button class="btn-success" id="confirmAddBtn">Confirmar Adição</button></div></div></div>
+
+    <div class="modal-overlay" id="alertsModal"><div class="modal-container modal-medium"><div class="modal-header"><h3><i class="fas fa-exclamation-triangle"></i> Itens em Alerta</h3><button class="modal-close" onclick="closeAlertsModal()">&times;</button></div><div class="modal-body" id="alertsModalBody"></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeAlertsModal()">Fechar</button></div></div></div>
+
+    <div class="modal-overlay" id="companyModal"><div class="modal-container modal-small"><div class="modal-header"><h3><i class="fas fa-building"></i> Configuração</h3><button class="modal-close" onclick="closeCompanyModal()">&times;</button></div><div class="modal-body"><div class="form-group"><label>Nome da Empresa</label><input type="text" id="companyNameInput" placeholder="Razão Social"></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeCompanyModal()">Cancelar</button><button class="btn-cisco" id="saveCompanyBtn">Salvar</button></div></div></div>
+
+    <div class="modal-overlay" id="usersModal"><div class="modal-container modal-large"><div class="modal-header"><h3><i class="fas fa-users"></i> Gerenciar Usuários</h3><button class="modal-close" onclick="closeUsersModal()">&times;</button></div><div class="modal-body"><div id="usersList"></div><div class="form-group" style="margin-top: 20px;"><button class="btn-cisco" id="addUserBtn"><i class="fas fa-plus"></i> Novo Usuário</button></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeUsersModal()">Fechar</button></div></div></div>
+
+    <div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
