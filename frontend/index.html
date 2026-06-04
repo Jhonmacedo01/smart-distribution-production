@@ -6,9 +6,11 @@
     <meta name="theme-color" content="#00a0d6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Controle Inteligente | KANBAN ESTOQUE INDUSTRIAL</title>
+    <meta name="format-detection" content="telephone=no">
+    <meta name="description" content="Sistema de Controle de Estoque Industrial - KANBAN para Indústria 4.0">
+    <title>Controle Inteligente | KANBAN Estoque Industrial</title>
     
-    <!-- Favicon - Indústria 4.0 / Automação -->
+    <!-- Favicon - Indústria 4.0 / Automação / Mineração -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2300a0d6' rx='20'/%3E%3Ctext x='50' y='68' font-size='48' text-anchor='middle' fill='white' font-family='Arial'%3E⚙%3C/text%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2300a0d6' rx='20'/%3E%3Ctext x='50' y='68' font-size='48' text-anchor='middle' fill='white' font-family='Arial'%3E⚙%3C/text%3E%3C/svg%3E">
     
@@ -17,297 +19,525 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Tela de Login -->
-    <div id="loginContainer" class="login-container" style="display: flex;">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="login-logo">
-                    <i class="fas fa-microchip"></i>
-                    <i class="fas fa-industry"></i>
-                    <i class="fas fa-robot"></i>
+    <!-- ==================== TELA DE LOGIN ==================== -->
+    <main id="loginContainer" class="login-container" role="main" aria-label="Tela de Login">
+        <article class="login-card" role="article">
+            <header class="login-header">
+                <div class="login-logo" aria-label="Logo do Sistema">
+                    <i class="fas fa-microchip" aria-hidden="true"></i>
+                    <i class="fas fa-industry" aria-hidden="true"></i>
+                    <i class="fas fa-robot" aria-hidden="true"></i>
                 </div>
                 <h1>CONTROLE INTELIGENTE</h1>
                 <p>INDUSTRY 4.0 · KANBAN · ESTOQUE</p>
-            </div>
-            <div class="login-form">
+            </header>
+            
+            <form class="login-form" id="loginForm" aria-label="Formulário de Login">
                 <div class="form-group">
-                    <label><i class="fas fa-user"></i> USUÁRIO</label>
-                    <input type="text" id="loginUsername" placeholder="Digite seu usuário">
+                    <label for="loginUsername">
+                        <i class="fas fa-user" aria-hidden="true"></i> USUÁRIO
+                    </label>
+                    <input type="text" id="loginUsername" name="username" placeholder="Digite seu usuário" autocomplete="username" required>
                 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-lock"></i> SENHA</label>
-                    <input type="password" id="loginPassword" placeholder="Digite sua senha">
+                    <label for="loginPassword">
+                        <i class="fas fa-lock" aria-hidden="true"></i> SENHA
+                    </label>
+                    <input type="password" id="loginPassword" name="password" placeholder="Digite sua senha" autocomplete="current-password" required>
                 </div>
-                <button class="btn-cisco" id="loginBtn">
-                    <i class="fas fa-sign-in-alt"></i> ENTRAR
+                <button type="button" class="btn-cisco" id="loginBtn">
+                    <i class="fas fa-sign-in-alt" aria-hidden="true"></i> ENTRAR
                 </button>
-                <button class="btn-register" id="showRegisterBtn" style="margin-top: 12px;">
-                    <i class="fas fa-user-plus"></i> CRIAR CONTA
+                <button type="button" class="btn-register" id="showRegisterBtn">
+                    <i class="fas fa-user-plus" aria-hidden="true"></i> CRIAR CONTA
                 </button>
-            </div>
-            <div class="login-footer">
+            </form>
+            
+            <footer class="login-footer">
                 <span>Sistema de Controle de Estoque Industrial</span>
                 <span>v4.0.0</span>
-            </div>
-        </div>
-    </div>
+            </footer>
+        </article>
+    </main>
 
-    <!-- Tela de Cadastro -->
-    <div id="registerContainer" class="login-container" style="display: none;">
-        <div class="login-card">
-            <div class="login-header">
+    <!-- ==================== TELA DE CADASTRO ==================== -->
+    <main id="registerContainer" class="login-container" role="main" aria-label="Tela de Cadastro" style="display: none;">
+        <article class="login-card" role="article">
+            <header class="login-header">
                 <div class="login-logo">
-                    <i class="fas fa-user-plus"></i>
-                    <i class="fas fa-id-card"></i>
+                    <i class="fas fa-user-plus" aria-hidden="true"></i>
+                    <i class="fas fa-id-card" aria-hidden="true"></i>
                 </div>
                 <h1>CRIAR CONTA</h1>
                 <p>Preencha os dados para se cadastrar</p>
-            </div>
-            <div class="login-form">
+            </header>
+            
+            <form class="login-form" id="registerForm" aria-label="Formulário de Cadastro">
                 <div class="form-group">
-                    <label><i class="fas fa-user"></i> USUÁRIO *</label>
-                    <input type="text" id="registerUsername" placeholder="Escolha um usuário">
+                    <label for="registerUsername">
+                        <i class="fas fa-user" aria-hidden="true"></i> USUÁRIO *
+                    </label>
+                    <input type="text" id="registerUsername" name="username" placeholder="Escolha um usuário" required>
                 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-lock"></i> SENHA *</label>
-                    <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres">
+                    <label for="registerPassword">
+                        <i class="fas fa-lock" aria-hidden="true"></i> SENHA *
+                    </label>
+                    <input type="password" id="registerPassword" name="password" placeholder="Mínimo 6 caracteres" required>
                 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-lock"></i> CONFIRMAR SENHA *</label>
-                    <input type="password" id="registerConfirmPassword" placeholder="Digite a senha novamente">
+                    <label for="registerConfirmPassword">
+                        <i class="fas fa-lock" aria-hidden="true"></i> CONFIRMAR SENHA *
+                    </label>
+                    <input type="password" id="registerConfirmPassword" name="confirmPassword" placeholder="Digite a senha novamente" required>
                 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-id-badge"></i> NOME COMPLETO *</label>
-                    <input type="text" id="registerName" placeholder="Seu nome completo">
+                    <label for="registerName">
+                        <i class="fas fa-id-badge" aria-hidden="true"></i> NOME COMPLETO *
+                    </label>
+                    <input type="text" id="registerName" name="name" placeholder="Seu nome completo" required>
                 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-qrcode"></i> MATRÍCULA *</label>
-                    <input type="text" id="registerRegistration" placeholder="Número de matrícula">
+                    <label for="registerRegistration">
+                        <i class="fas fa-qrcode" aria-hidden="true"></i> MATRÍCULA *
+                    </label>
+                    <input type="text" id="registerRegistration" name="registration" placeholder="Número de matrícula" required>
                 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-building"></i> EMPRESA</label>
-                    <input type="text" id="registerCompany" placeholder="Nome da empresa (opcional)">
+                    <label for="registerCompany">
+                        <i class="fas fa-building" aria-hidden="true"></i> EMPRESA
+                    </label>
+                    <input type="text" id="registerCompany" name="company" placeholder="Nome da empresa (opcional)">
                 </div>
-                <button class="btn-cisco" id="registerBtn">
-                    <i class="fas fa-check-circle"></i> CADASTRAR
+                <button type="button" class="btn-cisco" id="registerBtn">
+                    <i class="fas fa-check-circle" aria-hidden="true"></i> CADASTRAR
                 </button>
-                <button class="btn-cisco-outline" id="backToLoginBtn" style="margin-top: 12px; width: 100%;">
-                    <i class="fas fa-arrow-left"></i> VOLTAR PARA LOGIN
+                <button type="button" class="btn-cisco-outline" id="backToLoginBtn">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> VOLTAR PARA LOGIN
                 </button>
-            </div>
-            <div class="login-footer">
+            </form>
+            
+            <footer class="login-footer">
                 <span>Já possui conta? Faça login</span>
                 <span>v4.0.0</span>
-            </div>
-        </div>
-    </div>
+            </footer>
+        </article>
+    </main>
 
-    <!-- App Principal -->
+    <!-- ==================== APP PRINCIPAL ==================== -->
     <div id="appContainer" class="app-container" style="display: none;">
-        <!-- CISCO CATALYST HEADER -->
-        <header class="cisco-header">
-            <div class="header-bg-pattern"></div>
+        
+        <!-- HEADER -->
+        <header class="cisco-header" role="banner">
             <div class="header-content">
                 <div class="logo-section">
                     <div class="logo-icon">
-                        <i class="fas fa-microchip"></i>
-                        <i class="fas fa-industry"></i>
-                        <i class="fas fa-robot"></i>
+                        <i class="fas fa-microchip" aria-hidden="true"></i>
+                        <i class="fas fa-industry" aria-hidden="true"></i>
+                        <i class="fas fa-robot" aria-hidden="true"></i>
                     </div>
                     <div class="logo-text">
                         <h1>CONTROLE INTELIGENTE</h1>
                         <p>INDUSTRY 4.0 · KANBAN · ESTOQUE</p>
                     </div>
-                    <div class="version-badge">v4.0.0</div>
+                    <span class="version-badge" aria-label="Versão">v4.0.0</span>
                 </div>
-                <div class="header-stats">
-                    <div class="stat-card">
-                        <i class="fas fa-microchip"></i>
+                
+                <div class="header-stats" aria-label="Estatísticas do Sistema">
+                    <div class="stat-card" tabindex="0">
+                        <i class="fas fa-microchip" aria-hidden="true"></i>
                         <div class="stat-info">
                             <span class="stat-value" id="totalItemsCount">0</span>
                             <span class="stat-label">Equipamentos</span>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <i class="fas fa-cubes"></i>
+                    <div class="stat-card" tabindex="0">
+                        <i class="fas fa-cubes" aria-hidden="true"></i>
                         <div class="stat-info">
                             <span class="stat-value" id="totalUnitsCount">0</span>
                             <span class="stat-label">Unidades</span>
                         </div>
                     </div>
-                    <div class="stat-card stat-alert" id="alertStatCard" style="cursor: pointer;">
-                        <i class="fas fa-exclamation-triangle"></i>
+                    <div class="stat-card stat-alert" id="alertStatCard" tabindex="0" role="button" aria-label="Ver Alertas">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                         <div class="stat-info">
                             <span class="stat-value" id="alertsCount">0</span>
                             <span class="stat-label">Alertas</span>
                         </div>
                     </div>
                 </div>
+                
                 <div class="header-actions">
-                    <div class="user-info">
-                        <i class="fas fa-user-circle"></i>
+                    <div class="user-info" aria-label="Informações do Usuário">
+                        <i class="fas fa-user-circle" aria-hidden="true"></i>
                         <span id="userNameDisplay"></span>
                         <span class="user-badge" id="userRole"></span>
-                        <button class="logout-btn" id="logoutBtn" title="Sair">
-                            <i class="fas fa-sign-out-alt"></i>
+                        <button class="logout-btn" id="logoutBtn" title="Sair do Sistema" aria-label="Logout">
+                            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
                         </button>
                     </div>
-                    <button class="theme-toggle" id="themeToggle" title="Alternar tema">
-                        <i class="fas fa-moon"></i>
+                    <button class="theme-toggle" id="themeToggle" title="Alternar tema claro/escuro" aria-label="Alternar Tema">
+                        <i class="fas fa-moon" aria-hidden="true"></i>
                     </button>
-                    <div class="live-clock">
-                        <i class="far fa-clock"></i>
+                    <div class="live-clock" aria-label="Relógio ao vivo">
+                        <i class="far fa-clock" aria-hidden="true"></i>
                         <span id="liveClock">--:--:--</span>
                     </div>
                 </div>
             </div>
+            
             <div class="header-bottom">
                 <div class="company-info">
-                    <i class="fas fa-building"></i>
+                    <i class="fas fa-building" aria-hidden="true"></i>
                     <span id="companyNameDisplay">KANBAN AUTOMAÇÃO</span>
-                    <button class="edit-company" id="editCompanyBtn" title="Editar Empresa">
-                        <i class="fas fa-pen"></i>
+                    <button class="edit-company" id="editCompanyBtn" title="Editar nome da empresa" aria-label="Editar Empresa">
+                        <i class="fas fa-pen" aria-hidden="true"></i>
                     </button>
                 </div>
                 <div class="system-status">
-                    <span class="status-dot online"></span>
+                    <span class="status-dot online" aria-hidden="true"></span>
                     <span>Sistema Online</span>
-                    <span class="separator">|</span>
-                    <i class="fas fa-database"></i>
+                    <span class="separator" aria-hidden="true">|</span>
+                    <i class="fas fa-database" aria-hidden="true"></i>
                     <span>MongoDB Atlas</span>
                 </div>
             </div>
         </header>
 
-        <!-- KANBAN TOOLBAR -->
-        <div class="kanban-toolbar">
+        <!-- TOOLBAR -->
+        <nav class="kanban-toolbar" aria-label="Barra de Ferramentas">
             <div class="search-area">
                 <div class="search-wrapper">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Buscar equipamento, modelo ou localização...">
-                    <button class="clear-search" id="clearSearchBtn" style="display: none;">
-                        <i class="fas fa-times"></i>
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input type="search" id="searchInput" placeholder="Buscar equipamento, modelo ou localização..." aria-label="Buscar Equipamentos">
+                    <button class="clear-search" id="clearSearchBtn" style="display: none;" aria-label="Limpar Busca">
+                        <i class="fas fa-times" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
+            
             <div class="filters-area">
                 <div class="filter-group">
-                    <label><i class="fas fa-layer-group"></i> Categoria</label>
-                    <div class="filter-chips" id="categoryFilters">
-                        <button class="filter-chip active" data-category="all">TODOS</button>
-                        <button class="filter-chip" data-category="switch">SWITCH</button>
-                        <button class="filter-chip" data-category="gnss">GNSS/GPS</button>
-                        <button class="filter-chip" data-category="radio">RÁDIO</button>
-                        <button class="filter-chip" data-category="plc">PLC</button>
-                        <button class="filter-chip" data-category="fonte">FONTE</button>
-                        <button class="filter-chip" data-category="cftv">CFTV</button>
-                        <button class="filter-chip" data-category="fibra">FIBRA</button>
-                        <button class="filter-chip" data-category="outros">OUTROS</button>
+                    <label for="categoryFilters">
+                        <i class="fas fa-layer-group" aria-hidden="true"></i> Categoria
+                    </label>
+                    <div class="filter-chips" id="categoryFilters" role="tablist">
+                        <button class="filter-chip active" data-category="all" role="tab">TODOS</button>
+                        <button class="filter-chip" data-category="switch" role="tab">SWITCH</button>
+                        <button class="filter-chip" data-category="gnss" role="tab">GNSS/GPS</button>
+                        <button class="filter-chip" data-category="radio" role="tab">RÁDIO</button>
+                        <button class="filter-chip" data-category="plc" role="tab">PLC</button>
+                        <button class="filter-chip" data-category="fonte" role="tab">FONTE</button>
+                        <button class="filter-chip" data-category="cftv" role="tab">CFTV</button>
+                        <button class="filter-chip" data-category="fibra" role="tab">FIBRA</button>
+                        <button class="filter-chip" data-category="outros" role="tab">OUTROS</button>
                     </div>
                 </div>
             </div>
+            
             <div class="actions-area">
                 <button class="btn-cisco-outline admin-only" id="manageUsersBtn" style="display: none;">
-                    <i class="fas fa-users"></i> USUÁRIOS
+                    <i class="fas fa-users" aria-hidden="true"></i> USUÁRIOS
                 </button>
                 <button class="btn-cisco-outline" id="exportCsvBtn">
-                    <i class="fas fa-file-csv"></i> Exportar CSV
+                    <i class="fas fa-file-csv" aria-hidden="true"></i> Exportar CSV
                 </button>
                 <button class="btn-cisco admin-only" id="addItemBtn" style="display: none;">
-                    <i class="fas fa-plus"></i> NOVO EQUIPAMENTO
+                    <i class="fas fa-plus" aria-hidden="true"></i> NOVO EQUIPAMENTO
                 </button>
             </div>
-        </div>
+        </nav>
 
-        <!-- KANBAN METRICS DASHBOARD -->
-        <div class="kanban-metrics">
-            <div class="metric-card">
-                <div class="metric-icon"><i class="fas fa-chart-line"></i></div>
+        <!-- METRICS DASHBOARD -->
+        <section class="kanban-metrics" aria-label="Métricas do Dashboard">
+            <article class="metric-card">
+                <div class="metric-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></div>
                 <div class="metric-content">
                     <span class="metric-label">Rotatividade</span>
                     <span class="metric-value" id="turnoverRate">0%</span>
                 </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-icon"><i class="fas fa-boxes"></i></div>
+            </article>
+            <article class="metric-card">
+                <div class="metric-icon"><i class="fas fa-boxes" aria-hidden="true"></i></div>
                 <div class="metric-content">
                     <span class="metric-label">Categorias</span>
                     <span class="metric-value" id="categoriesCount">0</span>
                 </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-icon"><i class="fas fa-truck"></i></div>
+            </article>
+            <article class="metric-card">
+                <div class="metric-icon"><i class="fas fa-truck" aria-hidden="true"></i></div>
                 <div class="metric-content">
                     <span class="metric-label">Movimentações</span>
                     <span class="metric-value" id="totalMovements">0</span>
                 </div>
-            </div>
-        </div>
+            </article>
+        </section>
 
-        <!-- INVENTORY GRID -->
-        <div class="inventory-section">
-            <div class="section-header">
-                <h2><i class="fas fa-warehouse"></i> ESTOQUE INDUSTRIAL</h2>
+        <!-- INVENTORY SECTION -->
+        <section class="inventory-section" aria-label="Inventário de Equipamentos">
+            <header class="section-header">
+                <h2><i class="fas fa-warehouse" aria-hidden="true"></i> ESTOQUE INDUSTRIAL</h2>
                 <div class="view-options">
-                    <button class="view-btn active" data-view="grid">
-                        <i class="fas fa-th"></i>
+                    <button class="view-btn active" data-view="grid" aria-label="Visualização em Grade">
+                        <i class="fas fa-th" aria-hidden="true"></i>
                     </button>
-                    <button class="view-btn" data-view="list">
-                        <i class="fas fa-list"></i>
+                    <button class="view-btn" data-view="list" aria-label="Visualização em Lista">
+                        <i class="fas fa-list" aria-hidden="true"></i>
                     </button>
                 </div>
-            </div>
+            </header>
             <div class="inventory-grid" id="inventoryGrid"></div>
             <div class="inventory-list" id="inventoryList" style="display: none;"></div>
-        </div>
+        </section>
 
         <!-- HISTORY SECTION -->
-        <div class="history-section">
-            <div class="section-header">
-                <h2><i class="fas fa-history"></i> HISTÓRICO DE MOVIMENTAÇÕES</h2>
+        <section class="history-section" aria-label="Histórico de Movimentações">
+            <header class="section-header">
+                <h2><i class="fas fa-history" aria-hidden="true"></i> HISTÓRICO DE MOVIMENTAÇÕES</h2>
                 <div class="history-actions">
                     <button class="btn-cisco-outline small" id="exportHistoryBtn">
-                        <i class="fas fa-print"></i> Relatório
+                        <i class="fas fa-print" aria-hidden="true"></i> Relatório
                     </button>
                     <button class="btn-cisco-outline small admin-only" id="clearHistoryBtn" style="display: none;">
-                        <i class="fas fa-trash-alt"></i> Limpar
+                        <i class="fas fa-trash-alt" aria-hidden="true"></i> Limpar
                     </button>
                 </div>
-            </div>
+            </header>
             <div class="table-wrapper">
-                <table class="data-table history-table">
+                <table class="data-table history-table" aria-label="Tabela de Histórico">
                     <thead>
-                        <tr><th>DATA/HORA</th><th>OM</th><th>EMPRESA</th><th>EQUIPAMENTO</th><th>QTD</th><th>TIPO</th><th>RESPONSÁVEL</th><th>AÇÕES</th></tr>
+                        <tr>
+                            <th>DATA/HORA</th>
+                            <th>OM</th>
+                            <th>EMPRESA</th>
+                            <th>EQUIPAMENTO</th>
+                            <th>QTD</th>
+                            <th>TIPO</th>
+                            <th>RESPONSÁVEL</th>
+                            <th>AÇÕES</th>
+                        </tr>
                     </thead>
                     <tbody id="historyBody">
-                        <tr><td colspan="8" class="empty-message"><i class="fas fa-inbox"></i> Nenhuma movimentação registrada</td></tr>
+                        <tr>
+                            <td colspan="8" class="empty-message">
+                                <i class="fas fa-inbox" aria-hidden="true"></i>
+                                <p>Nenhuma movimentação registrada</p>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
         <!-- FOOTER -->
-        <footer class="cisco-footer">
-            <div class="footer-left"><span class="status-dot online"></span><span>Controle Inteligente</span></div>
-            <div class="footer-center"><i class="fas fa-shield-alt"></i> Dados criptografados</div>
-            <div class="footer-right"><span>&copy; 2026 - KANBAN Industrial</span></div>
+        <footer class="cisco-footer" role="contentinfo">
+            <div class="footer-left">
+                <span class="status-dot online" aria-hidden="true"></span>
+                <span>Controle Inteligente</span>
+            </div>
+            <div class="footer-center">
+                <i class="fas fa-shield-alt" aria-hidden="true"></i> Dados criptografados
+            </div>
+            <div class="footer-right">
+                <span>&copy; 2026 - KANBAN Industrial</span>
+            </div>
         </footer>
     </div>
 
-    <!-- MODAIS -->
-    <div class="modal-overlay" id="itemModal"><div class="modal-container"><div class="modal-header"><h3 id="modalTitle"><i class="fas fa-microchip"></i> Equipamento</h3><button class="modal-close" onclick="closeModal()">&times;</button></div><div class="modal-body"><input type="hidden" id="itemId"><div class="form-group"><label>Nome do Equipamento *</label><input type="text" id="itemName" placeholder="Ex: Cisco IE 3200"></div><div class="form-row"><div class="form-group"><label>Categoria</label><select id="itemCategory"><option value="switch">Switch Industrial</option><option value="gnss">GNSS/GPS</option><option value="radio">Rádio</option><option value="plc">PLC</option><option value="fonte">Fonte</option><option value="cftv">CFTV</option><option value="fibra">Fibra</option><option value="outros">Outros</option></select></div><div class="form-group"><label>Estoque Mínimo</label><input type="number" id="itemMinStock" value="5" min="1"></div></div><div class="form-row"><div class="form-group"><label>Quantidade</label><input type="number" id="itemQuantity" value="0" min="0"></div><div class="form-group"><label>Localização</label><input type="text" id="itemLocation" placeholder="Local"></div></div><div class="form-group"><label>Observações</label><textarea id="itemNotes" rows="2"></textarea></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeModal()">Cancelar</button><button class="btn-cisco" id="saveItemBtn">Salvar</button></div></div></div>
+    <!-- ==================== MODAIS ==================== -->
+    
+    <!-- Modal de Equipamento -->
+    <div class="modal-overlay" id="itemModal" role="dialog" aria-modal="true" aria-label="Modal de Equipamento">
+        <div class="modal-container">
+            <header class="modal-header">
+                <h3 id="modalTitle"><i class="fas fa-microchip" aria-hidden="true"></i> Equipamento</h3>
+                <button class="modal-close" onclick="closeModal()" aria-label="Fechar">&times;</button>
+            </header>
+            <div class="modal-body">
+                <input type="hidden" id="itemId">
+                <div class="form-group">
+                    <label for="itemName">Nome do Equipamento *</label>
+                    <input type="text" id="itemName" placeholder="Ex: Cisco IE 3200">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemCategory">Categoria</label>
+                        <select id="itemCategory">
+                            <option value="switch">Switch Industrial</option>
+                            <option value="gnss">GNSS/GPS</option>
+                            <option value="radio">Rádio</option>
+                            <option value="plc">PLC</option>
+                            <option value="fonte">Fonte</option>
+                            <option value="cftv">CFTV</option>
+                            <option value="fibra">Fibra</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemMinStock">Estoque Mínimo</label>
+                        <input type="number" id="itemMinStock" value="5" min="1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemQuantity">Quantidade</label>
+                        <input type="number" id="itemQuantity" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemLocation">Localização</label>
+                        <input type="text" id="itemLocation" placeholder="Local">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="itemNotes">Observações</label>
+                    <textarea id="itemNotes" rows="2"></textarea>
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-cisco-outline" onclick="closeModal()">Cancelar</button>
+                <button class="btn-cisco" id="saveItemBtn">Salvar</button>
+            </footer>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="withdrawModal"><div class="modal-container"><div class="modal-header"><h3><i class="fas fa-sign-out-alt"></i> Retirada de Material</h3><button class="modal-close" onclick="closeWithdrawModal()">&times;</button></div><div class="modal-body"><div class="form-group"><label>Empresa *</label><input type="text" id="withdrawCompany" placeholder="Nome da Empresa"></div><div class="form-group"><label>Ordem de Manutenção (OM) *</label><input type="text" id="withdrawOm" placeholder="Ex: 2026051234"></div><div class="form-group"><label>Nome do Colaborador *</label><input type="text" id="withdrawName" placeholder="Nome completo"></div><div class="form-group"><label>Matrícula *</label><input type="text" id="withdrawRegistration" placeholder="Ex: 421144"></div><div class="form-group"><label>Atividade *</label><textarea id="withdrawActivity" rows="2" placeholder="Ex: CORRETIVA, PREVENTIVA..."></textarea></div><div class="info-card"><div class="info-row"><span>Equipamento:</span><strong id="withdrawItemName">-</strong></div><div class="info-row"><span>Disponível:</span><strong id="availableQty">0</strong></div></div><div class="form-group"><label>Quantidade</label><input type="number" id="withdrawQty" min="1" value="1"></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeWithdrawModal()">Cancelar</button><button class="btn-danger" id="confirmWithdrawBtn">Confirmar Retirada</button></div></div></div>
+    <!-- Modal de Retirada -->
+    <div class="modal-overlay" id="withdrawModal" role="dialog" aria-modal="true" aria-label="Modal de Retirada">
+        <div class="modal-container">
+            <header class="modal-header">
+                <h3><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Retirada de Material</h3>
+                <button class="modal-close" onclick="closeWithdrawModal()" aria-label="Fechar">&times;</button>
+            </header>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="withdrawCompany">Empresa *</label>
+                    <input type="text" id="withdrawCompany" placeholder="Nome da Empresa">
+                </div>
+                <div class="form-group">
+                    <label for="withdrawOm">Ordem de Manutenção (OM) *</label>
+                    <input type="text" id="withdrawOm" placeholder="Ex: 2026051234">
+                </div>
+                <div class="form-group">
+                    <label for="withdrawName">Nome do Colaborador *</label>
+                    <input type="text" id="withdrawName" placeholder="Nome completo">
+                </div>
+                <div class="form-group">
+                    <label for="withdrawRegistration">Matrícula *</label>
+                    <input type="text" id="withdrawRegistration" placeholder="Ex: 421144">
+                </div>
+                <div class="form-group">
+                    <label for="withdrawActivity">Atividade *</label>
+                    <textarea id="withdrawActivity" rows="2" placeholder="Ex: CORRETIVA, PREVENTIVA..."></textarea>
+                </div>
+                <div class="info-card">
+                    <div class="info-row"><span>Equipamento:</span><strong id="withdrawItemName">-</strong></div>
+                    <div class="info-row"><span>Disponível:</span><strong id="availableQty">0</strong></div>
+                </div>
+                <div class="form-group">
+                    <label for="withdrawQty">Quantidade</label>
+                    <input type="number" id="withdrawQty" min="1" value="1">
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-cisco-outline" onclick="closeWithdrawModal()">Cancelar</button>
+                <button class="btn-danger" id="confirmWithdrawBtn">Confirmar Retirada</button>
+            </footer>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="addStockModal"><div class="modal-container"><div class="modal-header"><h3><i class="fas fa-plus-circle"></i> Adição ao Estoque</h3><button class="modal-close" onclick="closeAddStockModal()">&times;</button></div><div class="modal-body"><div class="form-group"><label>Empresa *</label><input type="text" id="addCompany" placeholder="Nome da Empresa"></div><div class="form-group"><label>Funcionário Responsável *</label><input type="text" id="addResponsible" placeholder="Nome do responsável"></div><div class="form-group"><label>OM ou Nota Fiscal *</label><input type="text" id="addOmNota" placeholder="Número da OM ou NF"></div><div class="info-card"><div class="info-row"><span>Equipamento:</span><strong id="addItemName">-</strong></div></div><div class="form-group"><label>Quantidade *</label><input type="number" id="addQty" min="1" value="1"></div><div class="form-group"><label>Observação</label><textarea id="addObservation" rows="2" placeholder="Informações adicionais..."></textarea></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeAddStockModal()">Cancelar</button><button class="btn-success" id="confirmAddBtn">Confirmar Adição</button></div></div></div>
+    <!-- Modal de Adição -->
+    <div class="modal-overlay" id="addStockModal" role="dialog" aria-modal="true" aria-label="Modal de Adição">
+        <div class="modal-container">
+            <header class="modal-header">
+                <h3><i class="fas fa-plus-circle" aria-hidden="true"></i> Adição ao Estoque</h3>
+                <button class="modal-close" onclick="closeAddStockModal()" aria-label="Fechar">&times;</button>
+            </header>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="addCompany">Empresa *</label>
+                    <input type="text" id="addCompany" placeholder="Nome da Empresa">
+                </div>
+                <div class="form-group">
+                    <label for="addResponsible">Funcionário Responsável *</label>
+                    <input type="text" id="addResponsible" placeholder="Nome do responsável">
+                </div>
+                <div class="form-group">
+                    <label for="addOmNota">OM ou Nota Fiscal *</label>
+                    <input type="text" id="addOmNota" placeholder="Número da OM ou NF">
+                </div>
+                <div class="info-card">
+                    <div class="info-row"><span>Equipamento:</span><strong id="addItemName">-</strong></div>
+                </div>
+                <div class="form-group">
+                    <label for="addQty">Quantidade *</label>
+                    <input type="number" id="addQty" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="addObservation">Observação</label>
+                    <textarea id="addObservation" rows="2" placeholder="Informações adicionais..."></textarea>
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-cisco-outline" onclick="closeAddStockModal()">Cancelar</button>
+                <button class="btn-success" id="confirmAddBtn">Confirmar Adição</button>
+            </footer>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="alertsModal"><div class="modal-container modal-medium"><div class="modal-header"><h3><i class="fas fa-exclamation-triangle"></i> Itens em Alerta</h3><button class="modal-close" onclick="closeAlertsModal()">&times;</button></div><div class="modal-body" id="alertsModalBody"></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeAlertsModal()">Fechar</button></div></div></div>
+    <!-- Modal de Alertas -->
+    <div class="modal-overlay" id="alertsModal" role="dialog" aria-modal="true" aria-label="Modal de Alertas">
+        <div class="modal-container modal-medium">
+            <header class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Itens em Alerta</h3>
+                <button class="modal-close" onclick="closeAlertsModal()" aria-label="Fechar">&times;</button>
+            </header>
+            <div class="modal-body" id="alertsModalBody"></div>
+            <footer class="modal-footer">
+                <button class="btn-cisco-outline" onclick="closeAlertsModal()">Fechar</button>
+            </footer>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="companyModal"><div class="modal-container modal-small"><div class="modal-header"><h3><i class="fas fa-building"></i> Configuração</h3><button class="modal-close" onclick="closeCompanyModal()">&times;</button></div><div class="modal-body"><div class="form-group"><label>Nome da Empresa</label><input type="text" id="companyNameInput" placeholder="Razão Social"></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeCompanyModal()">Cancelar</button><button class="btn-cisco" id="saveCompanyBtn">Salvar</button></div></div></div>
+    <!-- Modal de Empresa -->
+    <div class="modal-overlay" id="companyModal" role="dialog" aria-modal="true" aria-label="Modal de Configuração">
+        <div class="modal-container modal-small">
+            <header class="modal-header">
+                <h3><i class="fas fa-building" aria-hidden="true"></i> Configuração</h3>
+                <button class="modal-close" onclick="closeCompanyModal()" aria-label="Fechar">&times;</button>
+            </header>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="companyNameInput">Nome da Empresa</label>
+                    <input type="text" id="companyNameInput" placeholder="Razão Social">
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-cisco-outline" onclick="closeCompanyModal()">Cancelar</button>
+                <button class="btn-cisco" id="saveCompanyBtn">Salvar</button>
+            </footer>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="usersModal"><div class="modal-container modal-large"><div class="modal-header"><h3><i class="fas fa-users"></i> Gerenciar Usuários</h3><button class="modal-close" onclick="closeUsersModal()">&times;</button></div><div class="modal-body"><div id="usersList"></div><div class="form-group" style="margin-top: 20px;"><button class="btn-cisco" id="addUserBtn"><i class="fas fa-plus"></i> Novo Usuário</button></div></div><div class="modal-footer"><button class="btn-cisco-outline" onclick="closeUsersModal()">Fechar</button></div></div></div>
+    <!-- Modal de Usuários -->
+    <div class="modal-overlay" id="usersModal" role="dialog" aria-modal="true" aria-label="Modal de Usuários">
+        <div class="modal-container modal-large">
+            <header class="modal-header">
+                <h3><i class="fas fa-users" aria-hidden="true"></i> Gerenciar Usuários</h3>
+                <button class="modal-close" onclick="closeUsersModal()" aria-label="Fechar">&times;</button>
+            </header>
+            <div class="modal-body">
+                <div id="usersList"></div>
+                <div class="form-group">
+                    <button class="btn-cisco" id="addUserBtn"><i class="fas fa-plus" aria-hidden="true"></i> Novo Usuário</button>
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-cisco-outline" onclick="closeUsersModal()">Fechar</button>
+            </footer>
+        </div>
+    </div>
 
-    <div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+    <!-- Container de Notificações -->
+    <div id="notificationContainer" class="notification-container" aria-live="polite" aria-label="Notificações"></div>
 
     <script src="app.js"></script>
 </body>
